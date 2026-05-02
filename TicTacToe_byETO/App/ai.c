@@ -2,7 +2,10 @@
 #include <stdint.h>
 #include <string.h>
 
+#include "ai_tflm.h"
+
 static uint8_t g_ai_ready = 0U;
+static AiBackend g_backend = AI_BACKEND_HEURISTIC;
 
 static uint8_t has_line(const uint8_t board[9], uint8_t p)
 {
@@ -39,14 +42,39 @@ static uint8_t pick_first_empty_by_order(const uint8_t board[9])
     return 0U;
 }
 
+void ai_set_backend(AiBackend backend)
+{
+    g_backend = backend;
+}
+
+AiBackend ai_get_backend(void)
+{
+    return g_backend;
+}
+
 int ai_initialize(void)
 {
     g_ai_ready = 1U;
+
+    if (g_backend == AI_BACKEND_TFLM)
+    {
+        return ai_tflm_initialize();
+    }
+
     return 0;
 }
 
 uint8_t best_move_for_board(uint8_t board[9])
 {
+    if (g_backend == AI_BACKEND_TFLM)
+    {
+        uint8_t tflm_move = ai_tflm_best_move(board);
+        if (tflm_move < 9U && board[tflm_move] == 0U)
+        {
+            return tflm_move;
+        }
+    }
+
     uint8_t temp[9];
 
     if (g_ai_ready == 0U)

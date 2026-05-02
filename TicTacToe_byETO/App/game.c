@@ -6,6 +6,9 @@
 #include "OLED.h"
 #include "ai.h"
 
+// Change this one line to switch backends.
+#define GAME_AI_BACKEND AI_BACKEND_HEURISTIC
+
 static uint8_t board[9];
 static uint8_t youScore = 0;
 static uint8_t aiScore = 0;
@@ -195,6 +198,11 @@ __weak void Game_OnGameOverIRQ(uint8_t winnerPiece)
     (void)winnerPiece;
 }
 
+static void game_select_ai_backend(void)
+{
+    ai_set_backend(GAME_AI_BACKEND);
+}
+
 void Game_PlacePiece(void)
 {
     uint8_t cursor;
@@ -345,7 +353,9 @@ void Game_Start(void)
 {
     my_key_init();
     LED_Init();
-    
+
+    game_select_ai_backend();
+
     // Initialize AI inference engine
     int ai_ret = ai_initialize();
     if (ai_ret != 0)

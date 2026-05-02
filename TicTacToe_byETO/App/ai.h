@@ -3,6 +3,18 @@
 
 #include <stdint.h>
 
+typedef enum
+{
+	AI_BACKEND_HEURISTIC = 0,
+	AI_BACKEND_TFLM = 1
+} AiBackend;
+
+// Select the AI backend before initialization.
+// The default backend is AI_BACKEND_HEURISTIC.
+void ai_set_backend(AiBackend backend);
+
+AiBackend ai_get_backend(void);
+
 // Initialize the AI inference engine
 // Returns 0 on success, negative on error
 int ai_initialize(void);
