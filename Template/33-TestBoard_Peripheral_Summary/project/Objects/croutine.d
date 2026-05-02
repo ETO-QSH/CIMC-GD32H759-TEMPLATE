@@ -1,0 +1,14 @@
+.\objects\croutine.o: ..\Driver\FreeRTOS-10.3.1\croutine.c
+.\objects\croutine.o: ..\Driver\FreeRTOS-10.3.1\include\FreeRTOS.h
+.\objects\croutine.o: D:\Keil\MDK\ARM\ARMCC\Bin\..\include\stddef.h
+.\objects\croutine.o: D:\Keil\MDK\ARM\ARMCC\Bin\..\include\stdint.h
+.\objects\croutine.o: ..\Driver\FreeRTOS-10.3.1\FreeRTOSConfig.h
+.\objects\croutine.o: ..\Driver\FreeRTOS-10.3.1\include\projdefs.h
+.\objects\croutine.o: ..\Driver\FreeRTOS-10.3.1\include\portable.h
+.\objects\croutine.o: ..\Driver\FreeRTOS-10.3.1\include\deprecated_definitions.h
+.\objects\croutine.o: ..\Driver\FreeRTOS-10.3.1\portable\portmacro.h
+.\objects\croutine.o: ..\Driver\FreeRTOS-10.3.1\include\mpu_wrappers.h
+.\objects\croutine.o: ..\Driver\FreeRTOS-10.3.1\include\task.h
+.\objects\croutine.o: ..\Driver\FreeRTOS-10.3.1\include\list.h
+.\objects\croutine.o: ..\Driver\FreeRTOS-10.3.1\include\croutine.h
+.\objects\croutine.o: ..\Driver\FreeRTOS-10.3.1\include\list.h

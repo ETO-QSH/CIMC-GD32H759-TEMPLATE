@@ -1,0 +1,16 @@
+.\objects\netifapi.o: ..\Driver\ENET\lwip\src\netifapi.c
+.\objects\netifapi.o: ..\Driver\ENET\lwip\inc\lwip/opt.h
+.\objects\netifapi.o: ..\User\inc\lwipopts.h
+.\objects\netifapi.o: ..\Driver\FreeRTOS-10.3.1\FreeRTOSConfig.h
+.\objects\netifapi.o: D:\Keil\MDK\ARM\ARMCC\Bin\..\include\stdint.h
+.\objects\netifapi.o: ..\Driver\ENET\lwip\inc\lwip/debug.h
+.\objects\netifapi.o: ..\Driver\ENET\lwip\inc\lwip/arch.h
+.\objects\netifapi.o: ..\Driver\ENET\lwip_port\arch/cc.h
+.\objects\netifapi.o: ..\Driver\ENET\lwip_port\arch/cpu.h
+.\objects\netifapi.o: D:\Keil\MDK\ARM\ARMCC\Bin\..\include\stdio.h
+.\objects\netifapi.o: D:\Keil\MDK\ARM\ARMCC\Bin\..\include\stdlib.h
+.\objects\netifapi.o: D:\Keil\MDK\ARM\ARMCC\Bin\..\include\stddef.h
+.\objects\netifapi.o: D:\Keil\MDK\ARM\ARMCC\Bin\..\include\inttypes.h
+.\objects\netifapi.o: D:\Keil\MDK\ARM\ARMCC\Bin\..\include\limits.h
+.\objects\netifapi.o: D:\Keil\MDK\ARM\ARMCC\Bin\..\include\ctype.h
+.\objects\netifapi.o: ..\Driver\ENET\lwip\inc\lwip/opt.h

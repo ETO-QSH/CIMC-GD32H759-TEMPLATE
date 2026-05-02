@@ -1,0 +1,13 @@
+.\objects\heap_4.o: ..\Driver\FreeRTOS-10.3.1\portable\heap_4.c
+.\objects\heap_4.o: D:\Keil\MDK\ARM\ARMCC\Bin\..\include\stdlib.h
+.\objects\heap_4.o: ..\Driver\FreeRTOS-10.3.1\include\FreeRTOS.h
+.\objects\heap_4.o: D:\Keil\MDK\ARM\ARMCC\Bin\..\include\stddef.h
+.\objects\heap_4.o: D:\Keil\MDK\ARM\ARMCC\Bin\..\include\stdint.h
+.\objects\heap_4.o: ..\Driver\FreeRTOS-10.3.1\FreeRTOSConfig.h
+.\objects\heap_4.o: ..\Driver\FreeRTOS-10.3.1\include\projdefs.h
+.\objects\heap_4.o: ..\Driver\FreeRTOS-10.3.1\include\portable.h
+.\objects\heap_4.o: ..\Driver\FreeRTOS-10.3.1\include\deprecated_definitions.h
+.\objects\heap_4.o: ..\Driver\FreeRTOS-10.3.1\portable\portmacro.h
+.\objects\heap_4.o: ..\Driver\FreeRTOS-10.3.1\include\mpu_wrappers.h
+.\objects\heap_4.o: ..\Driver\FreeRTOS-10.3.1\include\task.h
+.\objects\heap_4.o: ..\Driver\FreeRTOS-10.3.1\include\list.h

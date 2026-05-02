@@ -1,0 +1,16 @@
+.\objects\tasks.o: ..\Driver\FreeRTOS-10.3.1\tasks.c
+.\objects\tasks.o: D:\Keil\MDK\ARM\ARMCC\Bin\..\include\stdlib.h
+.\objects\tasks.o: D:\Keil\MDK\ARM\ARMCC\Bin\..\include\string.h
+.\objects\tasks.o: ..\Driver\FreeRTOS-10.3.1\include\FreeRTOS.h
+.\objects\tasks.o: D:\Keil\MDK\ARM\ARMCC\Bin\..\include\stddef.h
+.\objects\tasks.o: D:\Keil\MDK\ARM\ARMCC\Bin\..\include\stdint.h
+.\objects\tasks.o: ..\Driver\FreeRTOS-10.3.1\FreeRTOSConfig.h
+.\objects\tasks.o: ..\Driver\FreeRTOS-10.3.1\include\projdefs.h
+.\objects\tasks.o: ..\Driver\FreeRTOS-10.3.1\include\portable.h
+.\objects\tasks.o: ..\Driver\FreeRTOS-10.3.1\include\deprecated_definitions.h
+.\objects\tasks.o: ..\Driver\FreeRTOS-10.3.1\portable\portmacro.h
+.\objects\tasks.o: ..\Driver\FreeRTOS-10.3.1\include\mpu_wrappers.h
+.\objects\tasks.o: ..\Driver\FreeRTOS-10.3.1\include\task.h
+.\objects\tasks.o: ..\Driver\FreeRTOS-10.3.1\include\list.h
+.\objects\tasks.o: ..\Driver\FreeRTOS-10.3.1\include\timers.h
+.\objects\tasks.o: ..\Driver\FreeRTOS-10.3.1\include\stack_macros.h

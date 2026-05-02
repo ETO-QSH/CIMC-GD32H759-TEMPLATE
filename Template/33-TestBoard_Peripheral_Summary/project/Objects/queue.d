@@ -1,0 +1,15 @@
+.\objects\queue.o: ..\Driver\FreeRTOS-10.3.1\queue.c
+.\objects\queue.o: D:\Keil\MDK\ARM\ARMCC\Bin\..\include\stdlib.h
+.\objects\queue.o: D:\Keil\MDK\ARM\ARMCC\Bin\..\include\string.h
+.\objects\queue.o: ..\Driver\FreeRTOS-10.3.1\include\FreeRTOS.h
+.\objects\queue.o: D:\Keil\MDK\ARM\ARMCC\Bin\..\include\stddef.h
+.\objects\queue.o: D:\Keil\MDK\ARM\ARMCC\Bin\..\include\stdint.h
+.\objects\queue.o: ..\Driver\FreeRTOS-10.3.1\FreeRTOSConfig.h
+.\objects\queue.o: ..\Driver\FreeRTOS-10.3.1\include\projdefs.h
+.\objects\queue.o: ..\Driver\FreeRTOS-10.3.1\include\portable.h
+.\objects\queue.o: ..\Driver\FreeRTOS-10.3.1\include\deprecated_definitions.h
+.\objects\queue.o: ..\Driver\FreeRTOS-10.3.1\portable\portmacro.h
+.\objects\queue.o: ..\Driver\FreeRTOS-10.3.1\include\mpu_wrappers.h
+.\objects\queue.o: ..\Driver\FreeRTOS-10.3.1\include\task.h
+.\objects\queue.o: ..\Driver\FreeRTOS-10.3.1\include\list.h
+.\objects\queue.o: ..\Driver\FreeRTOS-10.3.1\include\queue.h

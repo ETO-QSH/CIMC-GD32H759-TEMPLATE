@@ -1,0 +1,16 @@
+.\objects\stats.o: ..\Driver\ENET\lwip\src\stats.c
+.\objects\stats.o: ..\Driver\ENET\lwip\inc\lwip/opt.h
+.\objects\stats.o: ..\User\inc\lwipopts.h
+.\objects\stats.o: ..\Driver\FreeRTOS-10.3.1\FreeRTOSConfig.h
+.\objects\stats.o: D:\Keil\MDK\ARM\ARMCC\Bin\..\include\stdint.h
+.\objects\stats.o: ..\Driver\ENET\lwip\inc\lwip/debug.h
+.\objects\stats.o: ..\Driver\ENET\lwip\inc\lwip/arch.h
+.\objects\stats.o: ..\Driver\ENET\lwip_port\arch/cc.h
+.\objects\stats.o: ..\Driver\ENET\lwip_port\arch/cpu.h
+.\objects\stats.o: D:\Keil\MDK\ARM\ARMCC\Bin\..\include\stdio.h
+.\objects\stats.o: D:\Keil\MDK\ARM\ARMCC\Bin\..\include\stdlib.h
+.\objects\stats.o: D:\Keil\MDK\ARM\ARMCC\Bin\..\include\stddef.h
+.\objects\stats.o: D:\Keil\MDK\ARM\ARMCC\Bin\..\include\inttypes.h
+.\objects\stats.o: D:\Keil\MDK\ARM\ARMCC\Bin\..\include\limits.h
+.\objects\stats.o: D:\Keil\MDK\ARM\ARMCC\Bin\..\include\ctype.h
+.\objects\stats.o: ..\Driver\ENET\lwip\inc\lwip/opt.h

@@ -1,0 +1,16 @@
+.\objects\altcp_alloc.o: ..\Driver\ENET\lwip\src\altcp_alloc.c
+.\objects\altcp_alloc.o: ..\Driver\ENET\lwip\inc\lwip/opt.h
+.\objects\altcp_alloc.o: ..\User\inc\lwipopts.h
+.\objects\altcp_alloc.o: ..\Driver\FreeRTOS-10.3.1\FreeRTOSConfig.h
+.\objects\altcp_alloc.o: D:\Keil\MDK\ARM\ARMCC\Bin\..\include\stdint.h
+.\objects\altcp_alloc.o: ..\Driver\ENET\lwip\inc\lwip/debug.h
+.\objects\altcp_alloc.o: ..\Driver\ENET\lwip\inc\lwip/arch.h
+.\objects\altcp_alloc.o: ..\Driver\ENET\lwip_port\arch/cc.h
+.\objects\altcp_alloc.o: ..\Driver\ENET\lwip_port\arch/cpu.h
+.\objects\altcp_alloc.o: D:\Keil\MDK\ARM\ARMCC\Bin\..\include\stdio.h
+.\objects\altcp_alloc.o: D:\Keil\MDK\ARM\ARMCC\Bin\..\include\stdlib.h
+.\objects\altcp_alloc.o: D:\Keil\MDK\ARM\ARMCC\Bin\..\include\stddef.h
+.\objects\altcp_alloc.o: D:\Keil\MDK\ARM\ARMCC\Bin\..\include\inttypes.h
+.\objects\altcp_alloc.o: D:\Keil\MDK\ARM\ARMCC\Bin\..\include\limits.h
+.\objects\altcp_alloc.o: D:\Keil\MDK\ARM\ARMCC\Bin\..\include\ctype.h
+.\objects\altcp_alloc.o: ..\Driver\ENET\lwip\inc\lwip/opt.h

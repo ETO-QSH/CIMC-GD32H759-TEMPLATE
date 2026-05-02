@@ -1,0 +1,17 @@
+.\objects\netdb.o: ..\Driver\ENET\lwip\src\netdb.c
+.\objects\netdb.o: ..\Driver\ENET\lwip\inc\lwip/netdb.h
+.\objects\netdb.o: ..\Driver\ENET\lwip\inc\lwip/opt.h
+.\objects\netdb.o: ..\User\inc\lwipopts.h
+.\objects\netdb.o: ..\Driver\FreeRTOS-10.3.1\FreeRTOSConfig.h
+.\objects\netdb.o: D:\Keil\MDK\ARM\ARMCC\Bin\..\include\stdint.h
+.\objects\netdb.o: ..\Driver\ENET\lwip\inc\lwip/debug.h
+.\objects\netdb.o: ..\Driver\ENET\lwip\inc\lwip/arch.h
+.\objects\netdb.o: ..\Driver\ENET\lwip_port\arch/cc.h
+.\objects\netdb.o: ..\Driver\ENET\lwip_port\arch/cpu.h
+.\objects\netdb.o: D:\Keil\MDK\ARM\ARMCC\Bin\..\include\stdio.h
+.\objects\netdb.o: D:\Keil\MDK\ARM\ARMCC\Bin\..\include\stdlib.h
+.\objects\netdb.o: D:\Keil\MDK\ARM\ARMCC\Bin\..\include\stddef.h
+.\objects\netdb.o: D:\Keil\MDK\ARM\ARMCC\Bin\..\include\inttypes.h
+.\objects\netdb.o: D:\Keil\MDK\ARM\ARMCC\Bin\..\include\limits.h
+.\objects\netdb.o: D:\Keil\MDK\ARM\ARMCC\Bin\..\include\ctype.h
+.\objects\netdb.o: ..\Driver\ENET\lwip\inc\lwip/opt.h

@@ -1,0 +1,12 @@
+.\objects\port.o: ..\Driver\FreeRTOS-10.3.1\portable\port.c
+.\objects\port.o: ..\Driver\FreeRTOS-10.3.1\include\FreeRTOS.h
+.\objects\port.o: D:\Keil\MDK\ARM\ARMCC\Bin\..\include\stddef.h
+.\objects\port.o: D:\Keil\MDK\ARM\ARMCC\Bin\..\include\stdint.h
+.\objects\port.o: ..\Driver\FreeRTOS-10.3.1\FreeRTOSConfig.h
+.\objects\port.o: ..\Driver\FreeRTOS-10.3.1\include\projdefs.h
+.\objects\port.o: ..\Driver\FreeRTOS-10.3.1\include\portable.h
+.\objects\port.o: ..\Driver\FreeRTOS-10.3.1\include\deprecated_definitions.h
+.\objects\port.o: ..\Driver\FreeRTOS-10.3.1\portable\portmacro.h
+.\objects\port.o: ..\Driver\FreeRTOS-10.3.1\include\mpu_wrappers.h
+.\objects\port.o: ..\Driver\FreeRTOS-10.3.1\include\task.h
+.\objects\port.o: ..\Driver\FreeRTOS-10.3.1\include\list.h
