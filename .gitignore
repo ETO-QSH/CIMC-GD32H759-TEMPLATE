@@ -7,3 +7,4 @@ _tflm_repo/
 Objects/
 output/
 saved_model/
+*.ETO
