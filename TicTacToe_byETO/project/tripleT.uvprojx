@@ -431,9 +431,6 @@
           </Files>
         </Group>
         <Group>
-          <GroupName>Protocol</GroupName>
-        </Group>
-        <Group>
           <GroupName>Function</GroupName>
           <Files>
             <File>
@@ -452,12 +449,6 @@
               <FilePath>..\HeaderFiles\HeaderFiles.h</FilePath>
             </File>
           </Files>
-        </Group>
-        <Group>
-          <GroupName>Delay</GroupName>
-        </Group>
-        <Group>
-          <GroupName>System</GroupName>
         </Group>
         <Group>
           <GroupName>CMSIS</GroupName>
@@ -780,10 +771,14 @@
           </Files>
         </Group>
         <Group>
-          <GroupName>Middleware_TFLM</GroupName>
-        </Group>
-        <Group>
           <GroupName>Model</GroupName>
+          <Files>
+            <File>
+              <FileName>model_data.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\Model\model_data.h</FilePath>
+            </File>
+          </Files>
         </Group>
         <Group>
           <GroupName>::CMSIS</GroupName>

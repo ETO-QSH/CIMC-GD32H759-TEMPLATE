@@ -16,12 +16,13 @@ static const uint8_t winLines[8][3] = {
     {0, 4, 8}, {2, 4, 6}
 };
 
+static const uint8_t cursorOrder[9] = {4, 5, 7, 3, 1, 2, 8, 6, 0};
+
 static uint8_t find_first_empty(void)
 {
-    const uint8_t order[9] = {4,5,7,3,1,2,8,6,0}; // preference: 5,6,8,4,2,3,9,7,1 (1-based)
     for (uint8_t i = 0; i < 9; i++)
     {
-        uint8_t idx = order[i];
+        uint8_t idx = cursorOrder[i];
         if (board[idx] == 0) return idx;
     }
     return 0;
@@ -64,29 +65,63 @@ static uint8_t game_check_winner(uint8_t *lineIndex)
     return 0;
 }
 
-static uint8_t move_down(uint8_t cur)
+static uint8_t move_prev_order(uint8_t cur)
 {
-    uint8_t col = cur % 3;
-    uint8_t row = cur / 3;
-    uint8_t start = cur;
-    do {
-        row = (row + 1) % 3;
-        uint8_t cand = row * 3 + col;
-        if (board[cand] == 0) return cand;
-    } while ((row * 3 + col) != start);
+    int8_t currentIndex = -1;
+
+    for (uint8_t i = 0; i < 9; i++)
+    {
+        if (cursorOrder[i] == cur)
+        {
+            currentIndex = (int8_t)i;
+            break;
+        }
+    }
+
+    if (currentIndex < 0)
+    {
+        currentIndex = 0;
+    }
+
+    for (uint8_t step = 1; step <= 9; step++)
+    {
+        uint8_t idx = cursorOrder[(uint8_t)((currentIndex + 9 - step) % 9U)];
+        if (board[idx] == 0U)
+        {
+            return idx;
+        }
+    }
+
     return cur;
 }
 
-static uint8_t move_right(uint8_t cur)
+static uint8_t move_next_order(uint8_t cur)
 {
-    uint8_t col = cur % 3;
-    uint8_t row = cur / 3;
-    uint8_t start = cur;
-    do {
-        col = (col + 1) % 3;
-        uint8_t cand = row * 3 + col;
-        if (board[cand] == 0) return cand;
-    } while ((row * 3 + col) != start);
+    int8_t currentIndex = -1;
+
+    for (uint8_t i = 0; i < 9; i++)
+    {
+        if (cursorOrder[i] == cur)
+        {
+            currentIndex = (int8_t)i;
+            break;
+        }
+    }
+
+    if (currentIndex < 0)
+    {
+        currentIndex = 0;
+    }
+
+    for (uint8_t step = 1; step <= 9; step++)
+    {
+        uint8_t idx = cursorOrder[(uint8_t)((currentIndex + step) % 9U)];
+        if (board[idx] == 0U)
+        {
+            return idx;
+        }
+    }
+
     return cur;
 }
 
@@ -189,7 +224,7 @@ void Game_PlacePiece(void)
         k = my_key_scan();
         if (k == 1U)
         {
-            uint8_t next = move_down(cursor);
+            uint8_t next = move_prev_order(cursor);
             if (next != cursor)
             {
                 uint8_t old = cursor;
@@ -200,7 +235,7 @@ void Game_PlacePiece(void)
         }
         else if (k == 2U)
         {
-            uint8_t next = move_right(cursor);
+            uint8_t next = move_next_order(cursor);
             if (next != cursor)
             {
                 uint8_t old = cursor;
