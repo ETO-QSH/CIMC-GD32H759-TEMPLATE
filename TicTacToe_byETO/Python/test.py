@@ -1,11 +1,6 @@
-import onnx
-import torch
-import numpy as np
 import tensorflow as tf
-from onnx_tf.backend import prepare
-
-print("NumPy:", np.__version__)
-print("PyTorch:", torch.__version__)
-print("TensorFlow:", tf.__version__)
-print("ONNX:", onnx.__version__)
-print("All imports OK")
+interpreter = tf.lite.Interpreter(model_path="output/tictactoe_int8.tflite")
+interpreter.allocate_tensors()
+d = interpreter.get_input_details()[0]
+print(f"scale: {d['quantization_parameters']['scales'][0]}")
+print(f"zero_point: {d['quantization_parameters']['zero_points'][0]}")

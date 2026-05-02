@@ -69,8 +69,8 @@ def generate_dataset_from_minimax(states_2channel):
     for state in states_2channel:
         # 转换格式: (2,3,3) -> (3,3)
         board = np.zeros((3, 3))
-        board[state[0] == 1] = 1  # X
-        board[state[1] == 1] = -1  # O
+        board[state[0] == 1] = -1  # O
+        board[state[1] == 1] = 1  # X
 
         best_move = solve_state(board)
 

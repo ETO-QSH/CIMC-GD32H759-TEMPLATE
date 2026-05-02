@@ -19,10 +19,10 @@ def generate_all_valid_states():
         if check_win(board, 1) or check_win(board, -1):
             continue
 
-        # 转换为2通道输入格式: [X的位置, O的位置]
-        x_channel = (board == 1).astype(np.float32)
+        # 转换为2通道输入格式: [O的位置, X的位置]
         o_channel = (board == -1).astype(np.float32)
-        states.append(np.stack([x_channel, o_channel]))
+        x_channel = (board == 1).astype(np.float32)
+        states.append(np.stack([o_channel, x_channel]))
 
     return np.array(states)  # 形状: (N, 2, 3, 3)
 

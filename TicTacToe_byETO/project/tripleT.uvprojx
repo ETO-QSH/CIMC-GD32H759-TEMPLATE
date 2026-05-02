@@ -759,11 +759,6 @@
               <FilePath>..\App\ai.c</FilePath>
             </File>
             <File>
-              <FileName>ai_tflm.cc</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\App\ai_tflm.cc</FilePath>
-            </File>
-            <File>
               <FileName>game.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\App\game.c</FilePath>
@@ -772,6 +767,11 @@
               <FileName>ui.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\App\ui.c</FilePath>
+            </File>
+            <File>
+              <FileName>tflm.cc</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\App\tflm.cc</FilePath>
             </File>
           </Files>
         </Group>

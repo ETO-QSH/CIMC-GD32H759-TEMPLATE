@@ -2,7 +2,7 @@
 #include <stdint.h>
 #include <string.h>
 
-#include "ai_tflm.h"
+#include "tflm.h"
 
 static uint8_t g_ai_ready = 0U;
 static AiBackend g_backend = AI_BACKEND_HEURISTIC;
