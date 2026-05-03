@@ -16,13 +16,15 @@
 // conv_w
 #define CONV_W_SHAPE {32, 3, 3, 2}
 #define CONV_W_DTYPE "int8"
-#define CONV_W_SCALE 1.0f
+#define CONV_W_SCALE_COUNT 32
+#define CONV_W_SCALE 0.011534756136825308f
 #define CONV_W_ZERO_POINT 0
 
 // conv_b
 #define CONV_B_SHAPE {32}
 #define CONV_B_DTYPE "int32"
-#define CONV_B_SCALE 1.0f
+#define CONV_B_SCALE_COUNT 32
+#define CONV_B_SCALE 4.523434040493157e-05f
 #define CONV_B_ZERO_POINT 0
 
 // fc1_w

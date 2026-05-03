@@ -6,11 +6,10 @@ import tensorflow as tf
 def extract_weights_to_c(tflite_path='output/tictactoe_int8.tflite', out_dir='model'):
     """
     从 TFLite INT8 模型提取权重和量化参数。
-    纯 shape+dtype 匹配，不依赖 tensor name。
+    支持 per-channel 量化，Conv 权重和偏置保存 32 个独立 scale。
     """
     os.makedirs(out_dir, exist_ok=True)
 
-    # 定位 tflite 文件
     if not os.path.exists(tflite_path):
         candidates = [
             'output/tictactoe_int8.tflite',
@@ -38,7 +37,6 @@ def extract_weights_to_c(tflite_path='output/tictactoe_int8.tflite', out_dir='mo
 
     tensor_details = interpreter.get_tensor_details()
 
-    # 打印所有可读 tensor（调试用）
     print("      TFLite tensors:")
     readable = []
     for td in tensor_details:
@@ -48,6 +46,9 @@ def extract_weights_to_c(tflite_path='output/tictactoe_int8.tflite', out_dir='mo
         try:
             arr = interpreter.get_tensor(idx)
             if arr is not None:
+                # 同时保存 quantization 和 quantization_parameters
+                quant = td.get('quantization')
+                quant_params = td.get('quantization_parameters')
                 readable.append({
                     'name': name,
                     'index': idx,
@@ -55,14 +56,14 @@ def extract_weights_to_c(tflite_path='output/tictactoe_int8.tflite', out_dir='mo
                     'dtype': str(arr.dtype),
                     'size': arr.size,
                     'arr': arr,
-                    'quant': td.get('quantization') or td.get('quantization_parameters') or ([], [])
+                    'quant': quant,
+                    'quant_params': quant_params,
                 })
                 print(
                     f"        [{idx:3d}] shape={str(list(arr.shape)):20s} dtype={str(arr.dtype):10s} size={arr.size:6d} {name}")
         except Exception:
             pass
 
-    # 纯 shape+dtype 匹配定义
     targets = {
         'conv_w': {'shape': [32, 3, 3, 2], 'dtype': 'int8'},
         'conv_b': {'shape': [32], 'dtype': 'int32'},
@@ -88,58 +89,33 @@ def extract_weights_to_c(tflite_path='output/tictactoe_int8.tflite', out_dir='mo
         found[key] = matches[0]
         print(f"        ✓ {key:6s} matched '{matches[0]['name']}'")
 
-    # 提取量化参数
-    def get_scale_zp(quant):
+    def get_scale_zp(quant_tuple, quant_params):
         """
-        从 TFLite 量化参数中提取 scale 和 zero_point。
-        处理 per-tensor 和 per-channel 两种情况。
-        如果 scale 全为零或无效，fallback 到 1.0（避免除零）。
+        优先使用 quantization_parameters（支持 per-channel），
+        fallback 到 quantization tuple。
         """
-        scale = 1.0
-        zero_point = 0
+        # 先尝试 quantization_parameters（per-channel 数据在这里）
+        if quant_params is not None:
+            scales = quant_params.get('scales', None)
+            zps = quant_params.get('zero_points', None)
 
-        if isinstance(quant, (list, tuple)) and len(quant) >= 2:
-            s = quant[0] if quant[0] is not None else 1.0
-            z = quant[1] if quant[1] is not None else 0
-
-            # 处理 scale
-            if isinstance(s, (list, tuple, np.ndarray)) and len(s) > 0:
-                s_arr = np.array(s, dtype=np.float32)
-                non_zero = s_arr[s_arr != 0]
-                scale = float(np.mean(non_zero)) if len(non_zero) > 0 else 1.0
-            else:
-                scale = float(s) if float(s) != 0.0 else 1.0
-
-            # 处理 zero_point
-            if isinstance(z, (list, tuple, np.ndarray)) and len(z) > 0:
-                zero_point = int(np.mean(z))
-            else:
-                zero_point = int(z)
-
-        elif isinstance(quant, dict):
-            scales = quant.get('scales', None)
-            zps = quant.get('zero_points', None)
-
-            # 处理 scale
             if scales is not None:
                 try:
                     s_arr = np.array(scales, dtype=np.float32)
                     if s_arr.size > 0:
-                        non_zero = s_arr[s_arr != 0]
-                        scale = float(np.mean(non_zero)) if len(non_zero) > 0 else 1.0
+                        # 返回完整的 per-channel 数组，不取平均
+                        return s_arr.tolist(), int(np.mean(zps)) if zps is not None else 0
                 except (TypeError, ValueError):
-                    scale = 1.0
+                    pass
 
-            # 处理 zero_point
-            if zps is not None:
-                try:
-                    z_arr = np.array(zps)
-                    if z_arr.size > 0:
-                        zero_point = int(np.mean(z_arr))
-                except (TypeError, ValueError):
-                    zero_point = 0
+        # fallback 到 quantization tuple（per-tensor）
+        if isinstance(quant_tuple, (list, tuple)) and len(quant_tuple) >= 2:
+            s = quant_tuple[0] if quant_tuple[0] is not None else 1.0
+            z = quant_tuple[1] if quant_tuple[1] is not None else 0
+            scale = float(s) if float(s) != 0.0 else 1.0
+            return [scale], int(z)
 
-        return scale, zero_point
+        return [1.0], 0
 
     arrays = {}
     metas = {}
@@ -147,11 +123,12 @@ def extract_weights_to_c(tflite_path='output/tictactoe_int8.tflite', out_dir='mo
         info = found[key]
         arr = info['arr']
         arrays[key] = arr
-        scale, zero_point = get_scale_zp(info['quant'])
+
+        scales, zero_point = get_scale_zp(info['quant'], info['quant_params'])
         metas[key] = {
             'shape': info['shape'],
             'dtype': info['dtype'],
-            'scale': scale,
+            'scales': scales,  # 可能是 list（per-channel）或单元素 list
             'zero_point': zero_point,
         }
 
@@ -159,12 +136,13 @@ def extract_weights_to_c(tflite_path='output/tictactoe_int8.tflite', out_dir='mo
     input_td = interpreter.get_input_details()[0]
     output_td = interpreter.get_output_details()[0]
     for key, td in [('input', input_td), ('output', output_td)]:
-        q = td.get('quantization') or td.get('quantization_parameters') or ([], [])
-        scale, zero_point = get_scale_zp(q)
+        quant_params = td.get('quantization_parameters')
+        quant = td.get('quantization')
+        scales, zero_point = get_scale_zp(quant, quant_params)
         metas[key] = {
             'shape': list(td.get('shape', [])),
             'dtype': str(td.get('dtype')),
-            'scale': scale,
+            'scales': scales,
             'zero_point': zero_point,
         }
 
@@ -176,6 +154,8 @@ def extract_weights_to_c(tflite_path='output/tictactoe_int8.tflite', out_dir='mo
         wf.write('#ifndef MODEL_WEIGHTS_H\n')
         wf.write('#define MODEL_WEIGHTS_H\n\n')
         wf.write('#include <stdint.h>\n\n')
+
+        # 权重数组
         for key in ['conv_w', 'conv_b', 'fc1_w', 'fc1_b', 'fc2_w', 'fc2_b']:
             arr = arrays[key]
             shape = list(arr.shape)
@@ -195,12 +175,33 @@ def extract_weights_to_c(tflite_path='output/tictactoe_int8.tflite', out_dir='mo
                 lines.append(', '.join(parts[i:i + 12]))
             wf.write(',\n  '.join(lines))
             wf.write('\n};\n\n')
+
+        # per-channel scale 数组（仅 Conv 层需要）
+        wf.write('// conv_w per-channel scales (32 channels)\n')
+        wf.write('const float conv_w_scale_per_channel[] = {\n  ')
+        scales_str = [f'{s:.8f}f' for s in metas['conv_w']['scales']]
+        lines = []
+        for i in range(0, len(scales_str), 8):
+            lines.append(', '.join(scales_str[i:i + 8]))
+        wf.write(',\n  '.join(lines))
+        wf.write('\n};\n\n')
+
+        wf.write('// conv_b per-channel scales (32 channels)\n')
+        wf.write('const float conv_b_scale_per_channel[] = {\n  ')
+        scales_str = [f'{s:.8f}f' for s in metas['conv_b']['scales']]
+        lines = []
+        for i in range(0, len(scales_str), 8):
+            lines.append(', '.join(scales_str[i:i + 8]))
+        wf.write(',\n  '.join(lines))
+        wf.write('\n};\n\n')
+
         wf.write('#endif // MODEL_WEIGHTS_H\n')
 
     # 写入 model_meta.h
     with open(meta_path, 'w') as mf:
         mf.write('#ifndef MODEL_META_H\n')
         mf.write('#define MODEL_META_H\n\n')
+
         for key in ['input', 'output', 'conv_w', 'conv_b', 'fc1_w', 'fc1_b', 'fc2_w', 'fc2_b']:
             meta = metas.get(key)
             if not meta:
@@ -208,8 +209,19 @@ def extract_weights_to_c(tflite_path='output/tictactoe_int8.tflite', out_dir='mo
             mf.write(f'// {key}\n')
             mf.write(f'#define {key.upper()}_SHAPE {{{", ".join(str(s) for s in meta["shape"])}}}\n')
             mf.write(f'#define {key.upper()}_DTYPE "{meta["dtype"]}"\n')
-            mf.write(f'#define {key.upper()}_SCALE {meta["scale"]}f\n')
+
+            # per-tensor 的 scale 写单个值，per-channel 的写数量
+            scales = meta['scales']
+            if len(scales) == 1:
+                mf.write(f'#define {key.upper()}_SCALE {scales[0]}f\n')
+            else:
+                mf.write(f'#define {key.upper()}_SCALE_COUNT {len(scales)}\n')
+                # 同时写一个平均 scale 作为 fallback
+                avg_scale = float(np.mean(scales))
+                mf.write(f'#define {key.upper()}_SCALE {avg_scale}f\n')
+
             mf.write(f'#define {key.upper()}_ZERO_POINT {meta["zero_point"]}\n\n')
+
         mf.write('#endif // MODEL_META_H\n')
 
     print(f'      写入 {weights_path} 和 {meta_path}')

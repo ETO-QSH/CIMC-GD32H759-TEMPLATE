@@ -1,132 +1,253 @@
+import os
 import numpy as np
-import torch
 import tensorflow as tf
-from train import TicTacToeCNN
-
-# ============ 加载模型 ============
-
-# 加载 PyTorch 模型
-pt_model = TicTacToeCNN()
-pt_model.load_state_dict(torch.load("output/tictactoe_cnn.pth", map_location="cpu"))
-pt_model.eval()
-
-# 加载 TFLite INT8 模型
-interpreter_int8 = tf.lite.Interpreter(model_path="output/tictactoe_int8.tflite")
-interpreter_int8.allocate_tensors()
-input_details_int8 = interpreter_int8.get_input_details()[0]
-output_details_int8 = interpreter_int8.get_output_details()[0]
-
-# 加载 TFLite FP32 模型
-interpreter_fp32 = tf.lite.Interpreter(model_path="output/tictactoe_fp32.tflite")
-interpreter_fp32.allocate_tensors()
-input_details_fp32 = interpreter_fp32.get_input_details()[0]
-output_details_fp32 = interpreter_fp32.get_output_details()[0]
 
 
-# ============ 推理函数 ============
+def extract_weights_to_c(tflite_path='output/tictactoe_int8.tflite', out_dir='model'):
+    """
+    从 TFLite INT8 模型提取权重和量化参数。
+    支持 per-channel 量化，Conv 权重和偏置保存 32 个独立 scale。
+    """
+    os.makedirs(out_dir, exist_ok=True)
 
-def pt_predict(state_nchw):
-    """state_nchw: (2,3,3), 当前玩家视角 [current, opponent]"""
-    x = torch.tensor(state_nchw, dtype=torch.float32).unsqueeze(0)
-    with torch.no_grad():
-        out = pt_model(x)
-    return out.numpy().flatten()
+    if not os.path.exists(tflite_path):
+        candidates = [
+            'output/tictactoe_int8.tflite',
+            'output/tictactoe.tflite',
+        ]
+        found = None
+        for c in candidates:
+            if os.path.exists(c):
+                found = c
+                break
+        if found is None:
+            for root, _, files in os.walk('output'):
+                for f in files:
+                    if f.endswith('.tflite'):
+                        found = os.path.join(root, f)
+                        break
+                if found:
+                    break
+        if found is None:
+            raise FileNotFoundError(f"TFLite model not found: '{tflite_path}'")
+        tflite_path = found
+
+    interpreter = tf.lite.Interpreter(model_path=tflite_path)
+    interpreter.allocate_tensors()
+
+    tensor_details = interpreter.get_tensor_details()
+
+    print("      TFLite tensors:")
+    readable = []
+    for td in tensor_details:
+        idx = td['index']
+        name = td.get('name', '')
+        shape = list(td.get('shape', []))
+        try:
+            arr = interpreter.get_tensor(idx)
+            if arr is not None:
+                # 同时保存 quantization 和 quantization_parameters
+                quant = td.get('quantization')
+                quant_params = td.get('quantization_parameters')
+                readable.append({
+                    'name': name,
+                    'index': idx,
+                    'shape': list(arr.shape),
+                    'dtype': str(arr.dtype),
+                    'size': arr.size,
+                    'arr': arr,
+                    'quant': quant,
+                    'quant_params': quant_params,
+                })
+                print(
+                    f"        [{idx:3d}] shape={str(list(arr.shape)):20s} dtype={str(arr.dtype):10s} size={arr.size:6d} {name}")
+        except Exception:
+            pass
+
+    targets = {
+        'conv_w': {'shape': [32, 3, 3, 2], 'dtype': 'int8'},
+        'conv_b': {'shape': [32], 'dtype': 'int32'},
+        'fc1_w': {'shape': [64, 288], 'dtype': 'int8'},
+        'fc1_b': {'shape': [64], 'dtype': 'int32'},
+        'fc2_w': {'shape': [9, 64], 'dtype': 'int8'},
+        'fc2_b': {'shape': [9], 'dtype': 'int32'},
+    }
+
+    found = {}
+    for key, spec in targets.items():
+        matches = []
+        for info in readable:
+            if info['shape'] == spec['shape'] and info['dtype'] == spec['dtype']:
+                matches.append(info)
+
+        if len(matches) == 0:
+            raise RuntimeError(f"找不到 {key}: shape={spec['shape']} dtype={spec['dtype']}")
+        if len(matches) > 1:
+            names = [m['name'] for m in matches]
+            raise RuntimeError(f"找到多个 {key}: {names}")
+
+        found[key] = matches[0]
+        print(f"        ✓ {key:6s} matched '{matches[0]['name']}'")
+
+    def get_scale_zp(quant_tuple, quant_params):
+        """
+        优先使用 quantization_parameters（支持 per-channel），
+        fallback 到 quantization tuple。
+        """
+        # 先尝试 quantization_parameters（per-channel 数据在这里）
+        if quant_params is not None:
+            scales = quant_params.get('scales', None)
+            zps = quant_params.get('zero_points', None)
+
+            if scales is not None:
+                try:
+                    s_arr = np.array(scales, dtype=np.float32)
+                    if s_arr.size > 0:
+                        # 返回完整的 per-channel 数组，不取平均
+                        return s_arr.tolist(), int(np.mean(zps)) if zps is not None else 0
+                except (TypeError, ValueError):
+                    pass
+
+        # fallback 到 quantization tuple（per-tensor）
+        if isinstance(quant_tuple, (list, tuple)) and len(quant_tuple) >= 2:
+            s = quant_tuple[0] if quant_tuple[0] is not None else 1.0
+            z = quant_tuple[1] if quant_tuple[1] is not None else 0
+            scale = float(s) if float(s) != 0.0 else 1.0
+            return [scale], int(z)
+
+        return [1.0], 0
+
+    arrays = {}
+    metas = {}
+    for key in ['conv_w', 'conv_b', 'fc1_w', 'fc1_b', 'fc2_w', 'fc2_b']:
+        info = found[key]
+        arr = info['arr']
+        arrays[key] = arr
+
+        scales, zero_point = get_scale_zp(info['quant'], info['quant_params'])
+        metas[key] = {
+            'shape': info['shape'],
+            'dtype': info['dtype'],
+            'scales': scales,  # 可能是 list（per-channel）或单元素 list
+            'zero_point': zero_point,
+        }
+
+    # 输入/输出 meta
+    input_td = interpreter.get_input_details()[0]
+    output_td = interpreter.get_output_details()[0]
+    for key, td in [('input', input_td), ('output', output_td)]:
+        quant_params = td.get('quantization_parameters')
+        quant = td.get('quantization')
+        scales, zero_point = get_scale_zp(quant, quant_params)
+        metas[key] = {
+            'shape': list(td.get('shape', [])),
+            'dtype': str(td.get('dtype')),
+            'scales': scales,
+            'zero_point': zero_point,
+        }
+
+    # 写入 model_weights.h
+    weights_path = os.path.join(out_dir, 'model_weights.h')
+    meta_path = os.path.join(out_dir, 'model_meta.h')
+
+    with open(weights_path, 'w') as wf:
+        wf.write('#ifndef MODEL_WEIGHTS_H\n')
+        wf.write('#define MODEL_WEIGHTS_H\n\n')
+        wf.write('#include <stdint.h>\n\n')
+
+        # 权重数组
+        for key in ['conv_w', 'conv_b', 'fc1_w', 'fc1_b', 'fc2_w', 'fc2_b']:
+            arr = arrays[key]
+            shape = list(arr.shape)
+            dtype = str(arr.dtype)
+            wf.write(f'// {key} shape {shape} dtype {dtype}\n')
+            if np.issubdtype(arr.dtype, np.integer) and arr.dtype.itemsize == 1:
+                ctype = 'int8_t'
+            elif np.issubdtype(arr.dtype, np.integer) and arr.dtype.itemsize == 4:
+                ctype = 'int32_t'
+            else:
+                ctype = 'int32_t'
+            wf.write(f'const {ctype} {key}[] = {{\n  ')
+            flat = arr.flatten()
+            parts = [str(int(x)) for x in flat.tolist()]
+            lines = []
+            for i in range(0, len(parts), 12):
+                lines.append(', '.join(parts[i:i + 12]))
+            wf.write(',\n  '.join(lines))
+            wf.write('\n};\n\n')
+
+        # per-channel scale 数组（仅 Conv 层需要）
+        wf.write('// conv_w per-channel scales (32 channels)\n')
+        wf.write('const float conv_w_scale_per_channel[] = {\n  ')
+        scales_str = [f'{s:.8f}f' for s in metas['conv_w']['scales']]
+        lines = []
+        for i in range(0, len(scales_str), 8):
+            lines.append(', '.join(scales_str[i:i + 8]))
+        wf.write(',\n  '.join(lines))
+        wf.write('\n};\n\n')
+
+        wf.write('// conv_b per-channel scales (32 channels)\n')
+        wf.write('const float conv_b_scale_per_channel[] = {\n  ')
+        scales_str = [f'{s:.8f}f' for s in metas['conv_b']['scales']]
+        lines = []
+        for i in range(0, len(scales_str), 8):
+            lines.append(', '.join(scales_str[i:i + 8]))
+        wf.write(',\n  '.join(lines))
+        wf.write('\n};\n\n')
+
+        wf.write('#endif // MODEL_WEIGHTS_H\n')
+
+    # 写入 model_meta.h
+    with open(meta_path, 'w') as mf:
+        mf.write('#ifndef MODEL_META_H\n')
+        mf.write('#define MODEL_META_H\n\n')
+
+        for key in ['input', 'output', 'conv_w', 'conv_b', 'fc1_w', 'fc1_b', 'fc2_w', 'fc2_b']:
+            meta = metas.get(key)
+            if not meta:
+                continue
+            mf.write(f'// {key}\n')
+            mf.write(f'#define {key.upper()}_SHAPE {{{", ".join(str(s) for s in meta["shape"])}}}\n')
+            mf.write(f'#define {key.upper()}_DTYPE "{meta["dtype"]}"\n')
+
+            # per-tensor 的 scale 写单个值，per-channel 的写数量
+            scales = meta['scales']
+            if len(scales) == 1:
+                mf.write(f'#define {key.upper()}_SCALE {scales[0]}f\n')
+            else:
+                mf.write(f'#define {key.upper()}_SCALE_COUNT {len(scales)}\n')
+                # 同时写一个平均 scale 作为 fallback
+                avg_scale = float(np.mean(scales))
+                mf.write(f'#define {key.upper()}_SCALE {avg_scale}f\n')
+
+            mf.write(f'#define {key.upper()}_ZERO_POINT {meta["zero_point"]}\n\n')
+
+        mf.write('#endif // MODEL_META_H\n')
+
+    print(f'      写入 {weights_path} 和 {meta_path}')
+    return weights_path, meta_path
 
 
-def tflite_int8_predict(state_nchw):
-    """state_nchw: (2,3,3)"""
-    # 转 NHWC
-    nhwc = state_nchw.transpose(1, 2, 0)  # (3,3,2)
-    nhwc = np.expand_dims(nhwc, 0).astype(np.float32)
+def convert_to_c_array():
+    with open("output/tictactoe_int8.tflite", "rb") as f:
+        data = f.read()
 
-    # 量化到 int8
-    scale = input_details_int8['quantization_parameters']['scales'][0]
-    zp = input_details_int8['quantization_parameters']['zero_points'][0]
-    nhwc_int8 = (nhwc / scale + zp).astype(np.int8)
+    os.makedirs("model", exist_ok=True)
+    with open("model/model_data.h", "w") as f:
+        f.write("#ifndef MODEL_DATA_H\n#define MODEL_DATA_H\n\n")
+        f.write(f"const unsigned int model_len = {len(data)};\n")
+        f.write("__attribute__((aligned(8))) const unsigned char model_data[] = {\n  ")
+        hex_str = ", ".join(f"0x{b:02x}" for b in data)
+        lines = []
+        parts = hex_str.split(", ")
+        for i in range(0, len(parts), 12):
+            lines.append(", ".join(parts[i:i + 12]))
+        f.write(",\n  ".join(lines))
+        f.write("\n};\n\n#endif\n")
 
-    interpreter_int8.set_tensor(input_details_int8['index'], nhwc_int8)
-    interpreter_int8.invoke()
-    out = interpreter_int8.get_tensor(output_details_int8['index'])
-
-    # 反量化
-    o_scale = output_details_int8['quantization_parameters']['scales'][0]
-    o_zp = output_details_int8['quantization_parameters']['zero_points'][0]
-    out_f = (out.astype(np.float32) - o_zp) * o_scale
-    return out_f.flatten()
+    return data
 
 
-def tflite_fp32_predict(state_nchw):
-    """state_nchw: (2,3,3)"""
-    # 转 NHWC
-    nhwc = state_nchw.transpose(1, 2, 0)  # (3,3,2)
-    nhwc = np.expand_dims(nhwc, 0).astype(np.float32)
-
-    interpreter_fp32.set_tensor(input_details_fp32['index'], nhwc)
-    interpreter_fp32.invoke()
-    out = interpreter_fp32.get_tensor(output_details_fp32['index'])
-    return out.flatten()
-
-
-# ============ 测试函数 ============
-
-def compare_predictions(name, state_nchw):
-    """对比三个模型的输出"""
-    pt_out = pt_predict(state_nchw)
-    fp32_out = tflite_fp32_predict(state_nchw)
-    int8_out = tflite_int8_predict(state_nchw)
-
-    print(f"\n=== {name} ===")
-    print(f"PyTorch:   {pt_out}")
-    print(f"TFLite FP32: {fp32_out}")
-    print(f"TFLite INT8: {int8_out}")
-
-    # 计算差异
-    diff_fp32 = np.abs(pt_out - fp32_out)
-    diff_int8 = np.abs(pt_out - int8_out)
-
-    print(f"\n|PyTorch - FP32| max={diff_fp32.max():.6f}, mean={diff_fp32.mean():.6f}")
-    print(f"|PyTorch - INT8| max={diff_int8.max():.6f}, mean={diff_int8.mean():.6f}")
-
-    # 判断问题来源
-    if diff_fp32.max() < 1e-4:
-        print("\n✅ FP32 模型与 PyTorch 输出一致，问题出在 INT8 量化上")
-    else:
-        print("\n❌ FP32 模型与 PyTorch 输出不一致，问题出在 TFLite 转换/推理过程中")
-
-    if diff_int8.max() < 1e-4:
-        print("✅ INT8 模型与 PyTorch 输出一致")
-    else:
-        print(f"⚠️  INT8 量化引入误差: max={diff_int8.max():.6f}")
-
-
-# ============ 测试用例 ============
-
-# 测试局面 1：空棋盘，轮到 X
-empty_board = np.zeros((2, 3, 3), dtype=np.float32)
-compare_predictions("空棋盘（轮到 X）", empty_board)
-
-# 测试局面 2：O 占中心，轮到 X
-board_o_center = np.zeros((2, 3, 3), dtype=np.float32)
-board_o_center[1, 1, 1] = 1.0
-compare_predictions("O 占中心（轮到 X）", board_o_center)
-
-# 测试局面 3：O 双杀威胁，轮到 X
-board_threat = np.zeros((2, 3, 3), dtype=np.float32)
-board_threat[0, 1, 1] = 1.0  # X 在中心
-board_threat[1, 0, 0] = 1.0  # O 在 0
-board_threat[1, 0, 1] = 1.0  # O 在 1
-compare_predictions("O 双杀威胁（轮到 X，应该堵 2）", board_threat)
-
-# 测试局面 4：X 即将获胜
-board_x_win = np.zeros((2, 3, 3), dtype=np.float32)
-board_x_win[0, 0, 0] = 1.0  # X 在 0
-board_x_win[0, 0, 1] = 1.0  # X 在 1
-board_x_win[1, 1, 1] = 1.0  # O 在 4
-compare_predictions("X 即将获胜（X 在 0,1，O 在 4）", board_x_win)
-
-# 测试局面 5：O 直线威胁
-board_o_line = np.zeros((2, 3, 3), dtype=np.float32)
-board_o_line[0, 0, 0] = 1.0  # X 在 0
-board_o_line[1, 1, 1] = 1.0  # O 在 4
-board_o_line[1, 1, 2] = 1.0  # O 在 5
-compare_predictions("O 直线威胁（O 在 4,5，X 应该堵 3）", board_o_line)
+if __name__ == "__main__":
+    extract_weights_to_c()
+    convert_to_c_array()

@@ -15,6 +15,10 @@
 #define FC1_OUT 64
 #define FC2_OUT 9
 
+/* 外部声明 per-channel scale 数组（定义在 model_weights.h） */
+extern const float conv_w_scale_per_channel[32];
+extern const float conv_b_scale_per_channel[32];
+
 static uint8_t pick_first_empty_by_order(const uint8_t board[9])
 {
     static const uint8_t order[9] = {0, 1, 2, 3, 4, 5, 6, 7, 8};
@@ -36,72 +40,49 @@ uint8_t cmsisnn_best_move(uint8_t board[9])
 #endif
 	
     /* ---------- 量化参数 ---------- */
-#ifdef CONV_W_SCALE
-    const float conv_w_scale = (CONV_W_SCALE > 1e-6f) ? CONV_W_SCALE : 1.0f;
-#else
-    const float conv_w_scale = 1.0f;
-#endif
-#ifdef CONV_W_ZERO_POINT
+    const float input_scale = INPUT_SCALE;
+    
+    /* Conv: per-channel */
     const int conv_w_zp = CONV_W_ZERO_POINT;
-#else
-    const int conv_w_zp = 0;
-#endif
-#ifdef CONV_B_SCALE
-    const float conv_b_scale = (CONV_B_SCALE > 1e-6f) ? CONV_B_SCALE : 1.0f;
-#else
-    const float conv_b_scale = input_scale * conv_w_scale;
-#endif
-
-#ifdef FC1_W_SCALE
-    const float fc1_w_scale = (FC1_W_SCALE > 1e-6f) ? FC1_W_SCALE : 1.0f;
-#else
-    const float fc1_w_scale = 1.0f;
-#endif
-#ifdef FC1_W_ZERO_POINT
+    
+    /* FC1: per-tensor */
+    const float fc1_w_scale = FC1_W_SCALE;
     const int fc1_w_zp = FC1_W_ZERO_POINT;
-#else
-    const int fc1_w_zp = 0;
-#endif
-#ifdef FC1_B_SCALE
-    const float fc1_b_scale = (FC1_B_SCALE > 1e-6f) ? FC1_B_SCALE : 1.0f;
-#else
     const float fc1_b_scale = input_scale * fc1_w_scale;
-#endif
-
-#ifdef FC2_W_SCALE
-    const float fc2_w_scale = (FC2_W_SCALE > 1e-6f) ? FC2_W_SCALE : 1.0f;
-#else
-    const float fc2_w_scale = 1.0f;
-#endif
-#ifdef FC2_W_ZERO_POINT
+    
+    /* FC2: per-tensor */
+    const float fc2_w_scale = FC2_W_SCALE;
     const int fc2_w_zp = FC2_W_ZERO_POINT;
-#else
-    const int fc2_w_zp = 0;
-#endif
-#ifdef FC2_B_SCALE
-    const float fc2_b_scale = (FC2_B_SCALE > 1e-6f) ? FC2_B_SCALE : 1.0f;
-#else
     const float fc2_b_scale = input_scale * fc2_w_scale;
-#endif
 
-    /* ---------- 输入层：当前玩家视角 ---------- */
+    /* ---------- 输入层 ---------- */
     float input_f[3][3][IN_CH];
     for (int pos = 0; pos < 9; ++pos) {
         int h = pos / 3;
         int w = pos % 3;
-        input_f[h][w][0] = (board[pos] == 2) ? 1.0f : 0.0f;  /* X = 当前玩家(AI) */
-        input_f[h][w][1] = (board[pos] == 1) ? 1.0f : 0.0f;  /* O = 对手 */
+        input_f[h][w][0] = (board[pos] == 2) ? 1.0f : 0.0f;
+        input_f[h][w][1] = (board[pos] == 1) ? 1.0f : 0.0f;
+    }
+		
+		/* ---------- 当前局势 ---------- */
+    printf("input:\r\n");
+    for (int h = 0; h < 3; h++) {
+        for (int w = 0; w < 3; w++) {
+            printf("[%.0f %.0f] ", input_f[h][w][0], input_f[h][w][1]);
+        }
+        printf("\r\n");
     }
 
-    /* ---------- Conv2D + ReLU ---------- */
-    /* 权重格式: [out, H, W, in] = [32, 3, 3, 2] */
+    /* ---------- Conv2D + ReLU (per-channel) ---------- */
     float conv_out[3][3][OUT_CH];
     memset(conv_out, 0, sizeof(conv_out));
 
     for (int oh = 0; oh < 3; ++oh) {
         for (int ow = 0; ow < 3; ++ow) {
             for (int oc = 0; oc < OUT_CH; ++oc) {
-                float acc = ((float)conv_b[oc]) * conv_b_scale;
+                /* 关键：用 per-channel 的 bias scale */
+                float acc = ((float)conv_b[oc]) * conv_b_scale_per_channel[oc];
+                
                 for (int kh = 0; kh < K_H; ++kh) {
                     for (int kw = 0; kw < K_W; ++kw) {
                         int ih = oh + kh - 1;
@@ -109,7 +90,8 @@ uint8_t cmsisnn_best_move(uint8_t board[9])
                         if (ih < 0 || ih >= 3 || iw < 0 || iw >= 3) continue;
                         for (int ic = 0; ic < IN_CH; ++ic) {
                             int widx = ((oc * K_H + kh) * K_W + kw) * IN_CH + ic;
-                            float wval = ((float)((int8_t)conv_w[widx] - conv_w_zp)) * conv_w_scale;
+                            float wval = ((float)((int8_t)conv_w[widx] - conv_w_zp)) 
+                                         * conv_w_scale_per_channel[oc];
                             acc += input_f[ih][iw][ic] * wval;
                         }
                     }
@@ -128,8 +110,7 @@ uint8_t cmsisnn_best_move(uint8_t board[9])
     for (int c = 0; c < OUT_CH; ++c)
         fc1_in[fidx++] = conv_out[h][w][c];
 
-    /* ---------- FC1 (288 -> 64) + ReLU ---------- */
-    /* 权重格式: [out, in] = [64, 288] */
+    /* ---------- FC1 + ReLU ---------- */
     float fc1_out[FC1_OUT];
     for (int o = 0; o < FC1_OUT; ++o) {
         float acc = ((float)fc1_b[o]) * fc1_b_scale;
@@ -142,8 +123,7 @@ uint8_t cmsisnn_best_move(uint8_t board[9])
         fc1_out[o] = acc;
     }
 
-    /* ---------- FC2 (64 -> 9) ---------- */
-    /* 权重格式: [out, in] = [9, 64] */
+    /* ---------- FC2 ---------- */
     float fc2_out[FC2_OUT];
     for (int o = 0; o < FC2_OUT; ++o) {
         float acc = ((float)fc2_b[o]) * fc2_b_scale;
@@ -155,15 +135,17 @@ uint8_t cmsisnn_best_move(uint8_t board[9])
         fc2_out[o] = acc;
     }
 		
-		/* ---------- 打印输出 ---------- */
-    printf("[");
-    for(int i = 0; i < FC2_OUT; i++){
-        printf("%.6f", fc2_out[i]);
-        if(i < FC2_OUT - 1){
-            printf(" ");
-        }
-    }
-    printf("]\r\n");
+		/* ---------- 模型输出 ---------- */
+    printf("output:\r\n");
+		for(int i = 0; i < FC2_OUT; i++){
+				if(i % 3 == 0) printf("[");
+				printf("%6.2f", fc2_out[i]);
+				if((i + 1) % 3 == 0){
+						printf("]\r\n");
+				} else {
+						printf(" ");
+				}
+		}
 
     /* ---------- 选最大且空的位置 ---------- */
     int best_pos = -1;
