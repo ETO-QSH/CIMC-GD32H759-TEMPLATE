@@ -5,6 +5,7 @@
 #include "systick.h"
 #include "OLED.h"
 #include "ai.h"
+#include "usart.h"
 
 // Change this one line to switch backends.
 #define GAME_AI_BACKEND AI_BACKEND_NEURAL // HEURISTIC || NEURAL

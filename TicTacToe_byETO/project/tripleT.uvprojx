@@ -190,7 +190,7 @@
             <hadIRAM2>1</hadIRAM2>
             <hadIROM2>0</hadIROM2>
             <StupSel>8</StupSel>
-            <useUlib>0</useUlib>
+            <useUlib>1</useUlib>
             <EndSel>0</EndSel>
             <uLtcg>0</uLtcg>
             <nSecure>0</nSecure>
@@ -340,7 +340,7 @@
               <MiscControls></MiscControls>
               <Define>GD32H7XX</Define>
               <Undefine></Undefine>
-              <IncludePath>..\CMSIS;..\CMSIS\GD\GD32H7xx\Include;..\Library\GD32H7xx_standard_peripheral\Include;..\Library\Utilites;..\HeaderFiles;..\User;..\Function;..\HardWare\LED;..\HardWare\OLED;..\HardWare\KEY;..\HardWare\USART;..\HardWare\I2C;..\App;..\Model;..\Middleware\TFLiteMicro;..\Middleware\TFLiteMicro\tensorflow;..\Middleware\TFLiteMicro\tensorflow\lite;..\Middleware\TFLiteMicro\third_party\flatbuffers\include</IncludePath>
+              <IncludePath>..\CMSIS;..\CMSIS\GD\GD32H7xx\Include;..\Library\GD32H7xx_standard_peripheral\Include;..\Library\Utilites;..\HeaderFiles;..\User;..\Function;..\App;..\Model;..\HardWare\LED;..\HardWare\OLED;..\HardWare\KEY;..\HardWare\USART;..\HardWare\I2C;..\HardWare\XCOM</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -428,6 +428,11 @@
               <FileName>i2c.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\HardWare\I2C\i2c.c</FilePath>
+            </File>
+            <File>
+              <FileName>xcom.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\HardWare\XCOM\xcom.c</FilePath>
             </File>
           </Files>
         </Group>
@@ -780,9 +785,14 @@
           <GroupName>Model</GroupName>
           <Files>
             <File>
-              <FileName>model_data.h</FileName>
+              <FileName>model_meta.h</FileName>
               <FileType>5</FileType>
-              <FilePath>..\Model\model_data.h</FilePath>
+              <FilePath>..\Model\model_meta.h</FilePath>
+            </File>
+            <File>
+              <FileName>model_weights.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\Model\model_weights.h</FilePath>
             </File>
           </Files>
         </Group>

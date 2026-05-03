@@ -1,43 +1,16 @@
-/************************************************************
- * 版权：2025CIMC Copyright。
- * 文件：Function.c
- * 作者: Jialei Zhao
- * 平台: 2025CIMC IHD-V04
- * 版本: Jialei Zhao     2026/2/5     V0.01    original
-************************************************************/
-
-
-/************************* 头文件 *************************/
-
 #include "Function.h"
-#include "../App/game.h"
+#include "game.h"
 #include "usart.h"
-
-/************************* 宏定义 *************************/
-
-
-/************************ 变量定义 ************************/
-
-
-/************************ 函数定义 ************************/
+#include "OLED.h"
 
 static void cache_enable(void);
-
-/************************************************************
- * Function :       System_Init
- * Comment  :       用于初始化MCU
- * Parameter:       null
- * Return   :       null
- * Author   :       Jialei Zhao
- * Date     :       2026-02-05 V0.1 original
-************************************************************/
 
 void System_Init(void)
 {
 
 	cache_enable();
 
-	systick_config();     // 时钟配置
+	systick_config();
 
 	OLED_Init();
 
@@ -45,26 +18,11 @@ void System_Init(void)
 
 }
 
-/************************************************************
- * Function :       UsrFunction
- * Comment  :       用户程序功能: 测试EEPROM读写功能
- * Parameter:       null
- * Return   :       null
- * Author   :       Jialei Zhao
- * Date     :       2026-02-05 V0.1 original
-************************************************************/
-
 void UsrFunction(void)
 {
 	Game_Start();
 }
 
-/*!
-	\brief      enable the CPU Chache
-	\param[in]  none
-	\param[out] none
-	\retval     none
-*/
 static void cache_enable(void)
 {
 	/* Enable I-Cache */
@@ -73,6 +31,3 @@ static void cache_enable(void)
 	/* Enable D-Cache */
 	SCB_EnableDCache();
 }
-
-/****************************End*****************************/
-

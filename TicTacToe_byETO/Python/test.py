@@ -123,3 +123,10 @@ board_x_win[0, 0, 0] = 1.0  # X 在 0
 board_x_win[0, 0, 1] = 1.0  # X 在 1
 board_x_win[1, 1, 1] = 1.0  # O 在 4
 compare_predictions("X 即将获胜（X 在 0,1，O 在 4）", board_x_win)
+
+# 测试局面 5：O 直线威胁
+board_o_line = np.zeros((2, 3, 3), dtype=np.float32)
+board_o_line[0, 0, 0] = 1.0  # X 在 0
+board_o_line[1, 1, 1] = 1.0  # O 在 4
+board_o_line[1, 1, 2] = 1.0  # O 在 5
+compare_predictions("O 直线威胁（O 在 4,5，X 应该堵 3）", board_o_line)

@@ -5,6 +5,8 @@
 #include "model_weights.h"
 #include "model_meta.h"
 
+#include "usart.h"
+
 #define K_H     3
 #define K_W     3
 #define IN_CH   2
@@ -15,7 +17,7 @@
 
 static uint8_t pick_first_empty_by_order(const uint8_t board[9])
 {
-    static const uint8_t order[9] = {4, 0, 2, 6, 8, 1, 3, 5, 7};
+    static const uint8_t order[9] = {0, 1, 2, 3, 4, 5, 6, 7, 8};
     for (int i = 0; i < 9; ++i) {
         if (board[order[i]] == 0) return order[i];
     }
@@ -32,7 +34,7 @@ uint8_t cmsisnn_best_move(uint8_t board[9])
 #if !defined(CONV_W_SHAPE) || !defined(FC2_W_SHAPE)
     return pick_first_empty_by_order(board);
 #endif
-
+	
     /* ---------- 量化参数 ---------- */
 #ifdef CONV_W_SCALE
     const float conv_w_scale = (CONV_W_SCALE > 1e-6f) ? CONV_W_SCALE : 1.0f;
@@ -152,6 +154,16 @@ uint8_t cmsisnn_best_move(uint8_t board[9])
         }
         fc2_out[o] = acc;
     }
+		
+		/* ---------- 打印输出 ---------- */
+    printf("[");
+    for(int i = 0; i < FC2_OUT; i++){
+        printf("%.6f", fc2_out[i]);
+        if(i < FC2_OUT - 1){
+            printf(" ");
+        }
+    }
+    printf("]\r\n");
 
     /* ---------- 选最大且空的位置 ---------- */
     int best_pos = -1;
