@@ -6,7 +6,7 @@
 typedef enum
 {
 	AI_BACKEND_HEURISTIC = 0,
-	AI_BACKEND_TFLM = 1
+	AI_BACKEND_NEURAL = 1
 } AiBackend;
 
 // Select the AI backend before initialization.

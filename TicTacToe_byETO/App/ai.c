@@ -56,7 +56,7 @@ int ai_initialize(void)
 {
     g_ai_ready = 1U;
 
-    if (g_backend == AI_BACKEND_TFLM)
+    if (g_backend == AI_BACKEND_NEURAL)
     {
         return cmsisnn_initialize();
     }
@@ -66,7 +66,7 @@ int ai_initialize(void)
 
 uint8_t best_move_for_board(uint8_t board[9])
 {
-    if (g_backend == AI_BACKEND_TFLM)
+    if (g_backend == AI_BACKEND_NEURAL)
     {
         uint8_t nn_move = cmsisnn_best_move(board);
         if (nn_move < 9U && board[nn_move] == 0U)

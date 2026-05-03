@@ -7,7 +7,7 @@
 #include "ai.h"
 
 // Change this one line to switch backends.
-#define GAME_AI_BACKEND AI_BACKEND_HEURISTIC
+#define GAME_AI_BACKEND AI_BACKEND_NEURAL // HEURISTIC || NEURAL
 
 static uint8_t board[9];
 static uint8_t youScore = 0;
