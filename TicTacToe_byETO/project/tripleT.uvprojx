@@ -10,6 +10,7 @@
       <TargetName>tripleT</TargetName>
       <ToolsetNumber>0x4</ToolsetNumber>
       <ToolsetName>ARM-ADS</ToolsetName>
+      <pArmCC>5060960::V5.06 update 7 (build 960)::.\ARMCC</pArmCC>
       <pCCUsed>5060960::V5.06 update 7 (build 960)::.\ARMCC</pCCUsed>
       <uAC6>0</uAC6>
       <TargetOption>
@@ -134,11 +135,11 @@
             <RunIndependent>0</RunIndependent>
             <UpdateFlashBeforeDebugging>1</UpdateFlashBeforeDebugging>
             <Capability>1</Capability>
-            <DriverSelection>-1</DriverSelection>
+            <DriverSelection>4096</DriverSelection>
           </Flash1>
           <bUseTDR>1</bUseTDR>
           <Flash2>BIN\UL2CM3.DLL</Flash2>
-          <Flash3></Flash3>
+          <Flash3>"" ()</Flash3>
           <Flash4></Flash4>
           <pFcarmOut></pFcarmOut>
           <pFcarmGrp></pFcarmGrp>
@@ -189,7 +190,7 @@
             <hadIRAM2>1</hadIRAM2>
             <hadIROM2>0</hadIROM2>
             <StupSel>8</StupSel>
-            <useUlib>1</useUlib>
+            <useUlib>0</useUlib>
             <EndSel>0</EndSel>
             <uLtcg>0</uLtcg>
             <nSecure>0</nSecure>
@@ -328,8 +329,8 @@
             <uC99>1</uC99>
             <uGnu>0</uGnu>
             <useXO>0</useXO>
-            <v6Lang>1</v6Lang>
-            <v6LangP>1</v6LangP>
+            <v6Lang>3</v6Lang>
+            <v6LangP>3</v6LangP>
             <vShortEn>1</vShortEn>
             <vShortWch>1</vShortWch>
             <v6Lto>0</v6Lto>
@@ -339,7 +340,7 @@
               <MiscControls></MiscControls>
               <Define>GD32H7XX</Define>
               <Undefine></Undefine>
-              <IncludePath>..\CMSIS;..\CMSIS\GD\GD32H7xx\Include;..\Library\GD32H7xx_standard_peripheral\Include;..\Library\Utilites;..\HeaderFiles;..\User;..\Function;..\HardWare\LED;..\HardWare\OLED;..\HardWare\KEY;..\HardWare\USART;..\HardWare\I2C;..\App;..\Model;..\Middleware\TFLiteMicro;..\Middleware\TFLiteMicro\tensorflow</IncludePath>
+              <IncludePath>..\CMSIS;..\CMSIS\GD\GD32H7xx\Include;..\Library\GD32H7xx_standard_peripheral\Include;..\Library\Utilites;..\HeaderFiles;..\User;..\Function;..\HardWare\LED;..\HardWare\OLED;..\HardWare\KEY;..\HardWare\USART;..\HardWare\I2C;..\App;..\Model;..\Middleware\TFLiteMicro;..\Middleware\TFLiteMicro\tensorflow;..\Middleware\TFLiteMicro\tensorflow\lite;..\Middleware\TFLiteMicro\third_party\flatbuffers\include</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -769,9 +770,9 @@
               <FilePath>..\App\ui.c</FilePath>
             </File>
             <File>
-              <FileName>tflm.cc</FileName>
-              <FileType>8</FileType>
-              <FilePath>..\App\tflm.cc</FilePath>
+              <FileName>cmsisnn.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\App\cmsisnn.c</FilePath>
             </File>
           </Files>
         </Group>
@@ -795,8 +796,8 @@
   <RTE>
     <apis/>
     <components>
-      <component Cclass="CMSIS" Cgroup="CORE" Cvendor="ARM" Cversion="5.6.0" condition="ARMv6_7_8-M Device">
-        <package name="CMSIS" schemaVersion="1.7.7" url="http://www.keil.com/pack/" vendor="ARM" version="5.9.0"/>
+      <component Cclass="CMSIS" Cgroup="CORE" Cvendor="ARM" Cversion="5.5.0" condition="ARMv6_7_8-M Device">
+        <package name="CMSIS" schemaVersion="1.3" url="http://www.keil.com/pack/" vendor="ARM" version="5.8.0"/>
         <targetInfos>
           <targetInfo name="tripleT"/>
         </targetInfos>

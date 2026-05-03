@@ -20,7 +20,7 @@ AiBackend ai_get_backend(void);
 int ai_initialize(void);
 
 // Get the best move for a given board state
-// board[9]: 0 = empty, 1 = X (player), 2 = O (AI)
+// board[9]: 0 = empty, 1 = O (player first-hand), 2 = X (AI second-hand)
 // Returns: index 0-8 of the best move (or 0 if error)
 uint8_t best_move_for_board(uint8_t board[9]);
 

@@ -20,15 +20,15 @@ def get_valid_moves(board):
 
 def minimax(board, player):
     winner = get_winner(board)
-    if winner == 1:
+    if winner == 1:          # X 赢
         return -1, 10
-    elif winner == -1:
+    elif winner == -1:       # O 赢
         return -1, -10
     elif len(get_valid_moves(board)) == 0:
         return -1, 0
 
     best_move = -1
-    if player == 1:  # MAX (X)
+    if player == 1:          # MAX (X)
         best_value = -np.inf
         for move in get_valid_moves(board):
             new_board = board.copy()
@@ -38,7 +38,7 @@ def minimax(board, player):
                 best_value = value
                 best_move = move
         return best_move, best_value
-    else:  # MIN (O)
+    else:                    # MIN (O)
         best_value = np.inf
         for move in get_valid_moves(board):
             new_board = board.copy()
@@ -51,31 +51,51 @@ def minimax(board, player):
 
 
 def solve_state(board):
-    # [修改] 显式统计 X/O 数量，逻辑更清晰，避免 np.sum(board)==0 的歧义
     count_x = np.sum(board == 1)
     count_o = np.sum(board == -1)
-    current_player = 1 if count_x == count_o else -1
+    # O 先手：O 和 X 数量相等 → 轮到 O；否则 → 轮到 X
+    if count_o == count_x:
+        current_player = -1
+    else:
+        current_player = 1
     move, _ = minimax(board, current_player)
     return move if move != -1 else 0
 
 
 def generate_dataset_from_minimax(states_2channel):
     """
-    核心函数：输入2通道状态，输出 (X, y) 数据集
+    核心修改：输出"当前玩家视角"的数据
+    Channel 0 = 当前行动方, Channel 1 = 对手
     """
-    print(f"正在使用 Minimax 计算 {len(states_2channel)} 个状态的最佳落子...")
     x, y = [], []
 
     for state in states_2channel:
-        # 转换格式: (2,3,3) -> (3,3)
+        # state[0] = O, state[1] = X（固定视角）
         board = np.zeros((3, 3))
         board[state[0] == 1] = -1  # O
-        board[state[1] == 1] = 1  # X
+        board[state[1] == 1] = 1   # X
+
+        count_o = np.sum(board == -1)
+        count_x = np.sum(board == 1)
+
+        # 判断当前轮到谁
+        if count_o == count_x:
+            current_player = -1   # 轮到 O
+        else:
+            current_player = 1    # 轮到 X
 
         best_move = solve_state(board)
 
-        # 存储数据
-        x.append(state)  # 保持2通道格式
+        # ✅ 关键：转换为"当前玩家视角"
+        # 模型永远学习"Channel 0 的玩家的最优策略"
+        if current_player == -1:  # O 是当前玩家
+            current_ch = state[0]   # O
+            opponent_ch = state[1]  # X
+        else:                     # X 是当前玩家
+            current_ch = state[1]   # X
+            opponent_ch = state[0]  # O
+
+        x.append(np.stack([current_ch, opponent_ch]))
         y.append(best_move)
 
     return np.array(x), np.array(y)

@@ -6,5 +6,5 @@ __pycache__/
 _tflm_repo/
 Objects/
 output/
-saved_model/
+saved/
 *.uvguix.*

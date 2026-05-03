@@ -5,7 +5,7 @@ from utils import representative_dataset
 
 def quantize_model():
     # 1. 配置量化转换器
-    converter = tf.lite.TFLiteConverter.from_saved_model("saved_model")
+    converter = tf.lite.TFLiteConverter.from_saved_model("saved")
     converter.optimizations = [tf.lite.Optimize.DEFAULT]
     converter.representative_dataset = representative_dataset
     converter.target_spec.supported_ops = [
@@ -27,7 +27,7 @@ def quantize_model():
     with open("output/tictactoe_fp32.tflite", "rb") as f:
         fp32_size = len(f.read())
     int8_size = len(tflite_quant_model)
-    print(f"✅ 量化完成 | FP32: {fp32_size} bytes → INT8: {int8_size} bytes ({int8_size / fp32_size:.1%})")
+    print(f"      量化完成 | FP32: {fp32_size} bytes → INT8: {int8_size} bytes ({int8_size / fp32_size:.1%})")
 
 
 if __name__ == "__main__":

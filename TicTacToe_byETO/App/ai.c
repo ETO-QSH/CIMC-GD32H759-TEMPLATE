@@ -2,7 +2,7 @@
 #include <stdint.h>
 #include <string.h>
 
-#include "tflm.h"
+#include "cmsisnn.h"
 
 static uint8_t g_ai_ready = 0U;
 static AiBackend g_backend = AI_BACKEND_HEURISTIC;
@@ -58,7 +58,7 @@ int ai_initialize(void)
 
     if (g_backend == AI_BACKEND_TFLM)
     {
-        return ai_tflm_initialize();
+        return cmsisnn_initialize();
     }
 
     return 0;
@@ -68,10 +68,10 @@ uint8_t best_move_for_board(uint8_t board[9])
 {
     if (g_backend == AI_BACKEND_TFLM)
     {
-        uint8_t tflm_move = ai_tflm_best_move(board);
-        if (tflm_move < 9U && board[tflm_move] == 0U)
+        uint8_t nn_move = cmsisnn_best_move(board);
+        if (nn_move < 9U && board[nn_move] == 0U)
         {
-            return tflm_move;
+            return nn_move;
         }
     }
 
