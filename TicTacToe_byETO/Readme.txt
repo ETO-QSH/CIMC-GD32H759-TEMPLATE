@@ -13,6 +13,10 @@
 ## 目录结构
 
 ├─App			主程序
+│  ├─ai
+│  ├─game
+│  ├─ui
+│  └─cmsisnn
 ├─CMSIS			内核驱动
 ├─Function		用户程序
 ├─HardWare		硬件驱动
@@ -21,13 +25,14 @@
 │  ├─LED
 │  ├─OLED
 │  └─USART
+│  └─XCOM
 ├─HeaderFiles		头文件
 ├─Library			库文件
 │  ├─GD32F4xx_standard_peripheral
 │  └─Utilites/gd32h759i_eval
-├─Middleware		中间件
-│  └─TFLiteMicro
-├─Model			模型数组
+├─Model			模型文件
+│  ├─model_meta
+│  └─model_weights
 ├─project		工程文件
 ├─Python		训练代码
 ├─Startup		启动文件
